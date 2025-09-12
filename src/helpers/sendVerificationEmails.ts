@@ -1,25 +1,47 @@
-import {resend} from "@/lib/resend"
 
+import { createTransport } from "nodemailer";
 
-import VerificationEmail from './../emails/VerificationEmail';
+import {getOtpHtml} from './../emails/VerificationEmail';
 
 import { ApiResponse } from "@/types/apiResponse";
 
 
 export async function sendVerificationEmail(
   email:string,
-  usernmae:string,
+  username:string,
   verifyCode:string,
 
 ):Promise<ApiResponse> {
   try {
 
-    await resend.emails.send({
-    from: 'Acme <onboarding@resend.dev>',
-    to: email,
-    subject: 'Verification Email',
-    react:VerificationEmail({username:usernmae,otp:verifyCode}),
-  });
+     const transporter = createTransport({
+      host: "smtp.gmail.com",
+      port: 465,
+      auth: {
+        user: process.env.SMTP_USER || "subashwp2@gmail.com",
+        pass: process.env.SMTP_PASSWORD || "your-app-password",
+      },
+    });
+
+    const html = getOtpHtml(
+    {
+        email,
+       otp:verifyCode,
+       username:username
+   
+
+    }
+    
+   )
+   
+    await transporter.sendMail({
+      from: process.env.SMTP_USER || "subashwp2@gmail.com",
+      to: email, // must not be undefined
+      subject:"Verification Mail from Session Chart",
+      html,
+    });
+
+    console.log("Email sent successfully");
 
     return{
       success:true,
