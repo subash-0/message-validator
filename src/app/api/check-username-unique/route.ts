@@ -50,7 +50,7 @@ export async function GET(req: Request) {
           success: false,
           message: "Username already taken",
         },
-        { status: 409 } // Conflict
+        { status: 201 } // Conflict
       );
     }
 
