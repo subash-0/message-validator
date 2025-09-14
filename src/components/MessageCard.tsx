@@ -2,10 +2,7 @@
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
-  CardTitle,
 } from "@/components/ui/card"
 import { DeleteAlert } from "./AlertDialogue"
 import { Message } from "@/modals/user.model"
@@ -28,20 +25,20 @@ export default function MessageCard({message,onMessageDelete}:MessageCardProps) 
     if(data.success){
       toast.success("Message deleted successfylly")
 
-      onMessageDelete(message?.id)
+      onMessageDelete(message?._id?.toString() ?? "")
     }
 
   }
 
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-xl">
       <CardHeader>
        
-        <CardDescription>
-         {message.content}
-        </CardDescription>
+        <CardContent className="flex justify-between items-start gap-x-0.5 px-1">
+        <p>{message?.content}</p>
        <DeleteAlert deleteMessage={handleDeleteMessage} />
+        </CardContent>
       </CardHeader>
      
     </Card>

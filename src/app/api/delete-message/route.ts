@@ -19,7 +19,7 @@ export async function DELETE(req: Request) {
   const userId = user._id;
   const { searchParams } = new URL(req.url);
   const message_id = searchParams.get("message_id");
- console.log(message_id);
+
   if (!message_id) {
     return Response.json(
       { success: false, message: "Message ID is required!" },

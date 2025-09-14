@@ -1,8 +1,8 @@
 
 import { authOptions } from "../auth/[...nextauth]/options";
 import dbConnect from "@/lib/dbConnect";
-import UserModel from "@/modals/user.model";
-import mongoose from "mongoose";
+import UserModel, { User } from "@/modals/user.model";
+import mongoose, { FilterQuery } from "mongoose";
 import {getServerSession} from "next-auth";
 
 
@@ -92,21 +92,31 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const username = searchParams.get("username"); 
 
-  console.log("username",username)
   const userId = user._id;
 
-  try {
-   let validId: mongoose.Types.ObjectId | null = null;
+  const toObjectId = (id?: string) =>
+  id && mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null;
 
-if (userId && mongoose.Types.ObjectId.isValid(userId)) {
-  validId = new mongoose.Types.ObjectId(userId);
-}
+  const validId = toObjectId(userId);
+
+  // Each condition is a filter for User
+  const conditions: FilterQuery<User>[] = [];
+
+  if (validId) {
+    conditions.push({ _id: validId });
+  }
+  if (username) {
+    conditions.push({ username });
+  }
+
+  if (conditions.length === 0) {
+    throw new Error("No identifier provided");
+  }
+  try {
+
 
 const updatedUser = await UserModel.findOne({
-  $or: [
-    validId ? { _id: validId } : {}, 
-    username ? { username } : {}
-  ],
+  $or: conditions,
 });
     if (!updatedUser) {
       return Response.json(
@@ -115,6 +125,7 @@ const updatedUser = await UserModel.findOne({
       );
     }
 
+   
     return Response.json(
       { success: true, isAcceptingMessage: updatedUser.isAcceptingMessage },
       { status: 200 }

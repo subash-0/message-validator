@@ -1,6 +1,8 @@
 import dbConnect from "@/lib/dbConnect";
 
 import UserModel from "@/modals/user.model";
+import { ApiResponse } from "@/types/apiResponse";
+import { AxiosError } from "axios";
 
 export async function POST(request:Request) {
   await dbConnect();
@@ -61,15 +63,16 @@ export async function POST(request:Request) {
 
     
   } catch (error) {
-    console.log("error check username:", error);
-
-    return Response.json(
-      {
-        success: false,
-        message: "Checking username failed",
-      },
-      { status: 500 }
-    );
+     const axiosError = error as AxiosError<ApiResponse>;
+        const message = axiosError?.response?.data?.message || "Error while registering User !";
+        return Response.json({
+    
+          success:false,
+          message,
+    
+    
+        },{status:500});
+        
     
   }
 

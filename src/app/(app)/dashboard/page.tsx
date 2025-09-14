@@ -6,16 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
+import { copyToClipboard, handleSwitchChange } from "@/helpers/funtions";
 import { Message } from "@/modals/user.model";
 import { acceptMessageSchema } from "@/Schemas/acceptMessageSchema";
 import { ApiResponse } from "@/types/apiResponse";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios, { AxiosError } from "axios";
 import { Loader2, RefreshCcw } from "lucide-react";
-import { User } from "next-auth";
 import { useSession } from "next-auth/react";
 import React, { useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 const Dashboard = () => {
@@ -24,13 +24,17 @@ const Dashboard = () => {
   const [isSwitchLoading, setIsSwitchingLoading] = useState(false);
 
   const handleDeleteMessage = (messageId: string) => {
-    setMessages((msg) => msg.filter((m) => m.id !== messageId));
+   setMessages((msg) => msg.filter((m) => m?._id?.toString() !== messageId?.toString() ));
+
   };
 
   const { data: session } = useSession();
 
-  const { register,watch, setValue } = useForm({
+  const { watch,control, setValue } = useForm({
     resolver: zodResolver(acceptMessageSchema),
+    defaultValues: {
+    acceptMessage: false, 
+  },
   });
 
   const acceptMessage = watch("acceptMessage");
@@ -41,7 +45,7 @@ const Dashboard = () => {
     try {
       const { data } = await axios.get<ApiResponse>("/api/accepting-message");
       setValue("acceptMessage", data?.isAcceptingMessage ?? false);
-      toast.success("Message Accepting");
+    
     } catch (error) {
       const axiosError = error as AxiosError<ApiResponse>;
       const message =
@@ -86,23 +90,8 @@ const Dashboard = () => {
 
   /// handle switch change ?
 
-  const handleSwitchChange = async () => {
-    try {
-      const { data } = await axios.post<ApiResponse>("/api/accepting-message", {
-        acceptingMessage: !acceptMessage,
-      });
 
-      if (data?.success) {
-        toast.success(data.message);
-        setValue("acceptMessage", !acceptMessage);
-      }
-    } catch (error) {
-      const axiosError = error as AxiosError<ApiResponse>;
-      const message =
-        axiosError.response?.data.message || "Something went wrong !";
-      toast.message(message);
-    }
-  };
+
 
   if (!session || !session.user) {
     return (
@@ -117,40 +106,40 @@ const Dashboard = () => {
   const baseURL = `${window.location.protocol}//${window.location.host}`;
   const profileURL = `${baseURL}/u/${username}`;
 
-  const copyToClipboard = () => {
-    navigator.clipboard
-      .writeText(profileURL)
-      .then(() => {
-        toast.success("Copied to clipboard");
-      })
-      .catch(() => {
-        toast.error("Failed to copy to clipboard");
-      });
-  };
+
 
   return (
-    <div className="my-8 md:mx-8 lg:mx-auto p-6 bg-white rounded-full max-w-6xl min-h-screen">
-      <h1 className="text-4xl font-bold mb-4">User Dashbaord</h1>
+    <div className="my-8 md:mx-8 lg:mx-auto p-6 bg-white rounded-full container mx-auto  min-h-screen">
+    <div className="flex flex-col md:flex-row justify-between items-center">
+       <div className="mb-4 md:mb-1">
+       <h1 className="text-4xl font-bold mb-4">User Dashbaord</h1>
        <h2 className="text-lg font-bold mb-2">
         Welcome : <span className="text-xl font-extrabold"> {username}</span>
        </h2>
 
+     </div>
       <div className="mb-4">
         <h2 className="text-lg font-semibold mb-2">Copy Your unique link</h2>
 
         <div className="flex items-center">
           <Input type="text"  value={profileURL} disabled className=" w-fit line-clamp-1 p-2 mr-2" />
-        <Button onClick={copyToClipboard}>Copy</Button>
+        <Button onClick={()=>copyToClipboard(profileURL)} className="cursor-pointer">Copy</Button>
         </div>
       </div>
+    </div>
 
 <div className="mb-4 flex items-center font-semibold">
-  <Switch
-  {...register("acceptMessage")}
-  checked={acceptMessage}
-  onCheckedChange={handleSwitchChange}
-  disabled={isSwitchLoading}
-  />
+ <Controller
+  name="acceptMessage"
+  control={control}
+  render={({ field }) => (
+    <Switch
+      checked={field.value}
+      onCheckedChange={(val) => handleSwitchChange(val, field.onChange)}
+      disabled={isSwitchLoading}
+    />
+  )}
+/>
   <span className="ml-4">Accept Messages :{acceptMessage ?"ON" :"OFF" }</span>
 
 </div>

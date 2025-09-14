@@ -4,6 +4,8 @@ import UserModel from "@/modals/user.model";
 
 import { sendVerificationEmail } from "@/helpers/sendVerificationEmails";
 import { generateHash } from "@/helpers/bcrypt";
+import { AxiosError } from "axios";
+import { ApiResponse } from "@/types/apiResponse";
 
 export async function POST(request:Request) {
 
@@ -88,11 +90,12 @@ if(!emailResponse.success){
 
     
   } catch (error) {
-    console.log("error registering Error",error);
+    const axiosError = error as AxiosError<ApiResponse>;
+    const message = axiosError?.response?.data?.message || "Error while registering User !";
     return Response.json({
 
       success:false,
-      message:"Error registering user",
+      message,
 
 
     },{status:500});
