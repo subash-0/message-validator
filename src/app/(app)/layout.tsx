@@ -7,6 +7,9 @@ import { Footer } from "@/components/footer";
 export const metadata: Metadata = {
   title: "Home | Session Message",
   description: "One of the best mystry message",
+ icons: {
+    icon: "/logo.jpg", 
+  },
 };
 
 export default function RootLayout({

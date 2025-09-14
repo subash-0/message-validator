@@ -114,7 +114,7 @@ const Dashboard = () => {
        <div className="mb-4 md:mb-1">
        <h1 className="text-4xl font-bold mb-4">User Dashbaord</h1>
        <h2 className="text-lg font-bold mb-2">
-        Welcome : <span className="text-xl font-extrabold"> {username}</span>
+        Welcome : <span className="text-xl font-extrabold"> {session.user.name}</span>
        </h2>
 
      </div>

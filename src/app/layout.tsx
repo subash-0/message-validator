@@ -16,6 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "session message",
   description: "Send message secretely without any restriction",
+  icons: {
+    icon: "/logo.jpg", // or "/favicon.png" or multiple
+  },
 };
 
 export default function RootLayout({
