@@ -63,7 +63,13 @@ export async function GET() {
     if (Array.isArray(assistantText)) assistantText = assistantText.join("");
 
     return NextResponse.json({ message: assistantText });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+     return Response.json(
+      {
+        success: false,
+        message: `Error while fetching messages ! ${err}`,
+        },
+      { status: 404 }
+    );
   }
 }

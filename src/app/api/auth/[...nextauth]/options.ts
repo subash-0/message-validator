@@ -14,13 +14,13 @@ export const authOptions: NextAuthOptions = {
         identifier: { label: "Email or Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials: any): Promise<any> {
+      async authorize(credentials: Record<string, string> | undefined) {
         await dbConnect();
 
         const user = await UserModel.findOne({
           $or: [
-            { email: credentials.identifier },
-            { username: credentials.identifier },
+            { email: credentials?.identifier },
+            { username: credentials?.identifier },
           ],
         });
 
@@ -28,13 +28,19 @@ export const authOptions: NextAuthOptions = {
         if (!user.isVerified) throw new Error("Verify your account before login!");
 
         const isMatch = await comparePassword(
-          credentials.password,
+          credentials?.password ?? "",
           user.password
         );
 
         if (!isMatch) throw new Error("Invalid credentials!");
 
-        return user;
+        return {
+          id: (user._id as string),
+          email: user.email,
+          username: user.username,
+          isVerified: user.isVerified,
+          isAcceptingMessage: user.isAcceptingMessage,
+        };
       },
     }),
   ],

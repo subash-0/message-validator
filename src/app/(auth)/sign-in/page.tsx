@@ -1,14 +1,11 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, {  useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signUpSchema } from "@/Schemas/signUpSchema";
-import axios, { AxiosError } from "axios";
-import { ApiResponse } from "@/types/apiResponse";
 import {
   Form,
   FormControl,
@@ -20,7 +17,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2 } from "lucide-react";
-import clsx from "clsx";
 import { signInSchema } from "@/Schemas/signInSchema";
 import { signIn } from "next-auth/react";
 
