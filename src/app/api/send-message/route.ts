@@ -1,6 +1,7 @@
 import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/modals/user.model";
 import { Message } from "@/modals/user.model";
+import { AxiosError } from "axios";
 
 
 export async function POST(req:Request) {
@@ -30,9 +31,9 @@ export async function POST(req:Request) {
     }
 
     const newMessage = {
-      content,createdAt:new Date()
+      content,createdAt: new Date()
     }
-
+   
     user.messages.push(newMessage as Message );
 
     await user.save();
@@ -49,12 +50,12 @@ export async function POST(req:Request) {
 
   } catch (error) {
 
-    console.error("Unexpected Error occured !", error)
-
+   const axiosError = error as AxiosError;
+   const message = axiosError.message || "Something went wrong !";
     return Response.json(
       {
         success: false,
-        message: "Error while sending message",
+        message
         },
       { status: 500 }
     );

@@ -44,9 +44,9 @@ try {
     return Response.json(
       {
         success: false,
-        message: "User not found !",
+        message: "You don't have any messages yet !",
         },
-      { status: 404 }
+      { status: 201 }
     );
   }
   
@@ -55,7 +55,7 @@ try {
         success: true,
         messages:userMessage[0]?.messages,
         },
-      { status: 404 }
+      { status: 200 }
     );
 
 

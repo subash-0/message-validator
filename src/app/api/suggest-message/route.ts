@@ -62,7 +62,7 @@ export async function GET() {
     // ensure string type
     if (Array.isArray(assistantText)) assistantText = assistantText.join("");
 
-    return NextResponse.json({ text: assistantText });
+    return NextResponse.json({ message: assistantText });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
