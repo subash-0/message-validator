@@ -1,4 +1,5 @@
 import { MessageSquare } from "lucide-react"
+import Link from "next/link"
 
 export function Footer() {
   return (
@@ -19,14 +20,14 @@ export function Footer() {
             <h3 className="font-semibold text-foreground mb-4">Product</h3>
             <ul className="space-y-2">
               <li>
-                <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">
                   How It Works
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#testimonials" className="text-muted-foreground hover:text-foreground transition-colors">
+                <Link href="/#testimonials" className="text-muted-foreground hover:text-foreground transition-colors">
                   Loves
-                </a>
+                </Link>
               </li>
               
             </ul>

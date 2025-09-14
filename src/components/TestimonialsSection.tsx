@@ -4,21 +4,21 @@ import { Star } from "lucide-react"
 export function TestimonialsSection() {
   const testimonials = [
     {
-      name: "Sarah M.",
+      name: "Satyam Yadav",
       role: "Content Creator",
       content:
         "Finally, a way to get honest feedback without the fear of judgment. My audience loves sharing their thoughts anonymously!",
       rating: 5,
     },
     {
-      name: "Alex K.",
+      name: "Shivam Yadav",
       role: "Student",
       content:
         "Perfect for getting anonymous questions during my study groups. It's made our discussions so much more open and helpful.",
       rating: 5,
     },
     {
-      name: "Jordan P.",
+      name: "Subash Kumar Yadav",
       role: "Small Business Owner",
       content:
         "Customer feedback has never been easier to collect. People are more honest when they can share anonymously.",
@@ -45,7 +45,7 @@ export function TestimonialsSection() {
                 <CardContent className="p-6">
                   <div className="flex mb-4">
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="h-4 w-4 fill-accent text-accent" />
+                      <Star key={i} className="h-4 w-4 fill-accent text-orange-500" />
                     ))}
                   </div>
                   <blockquote className="text-card-foreground mb-4 text-pretty">{testimonial.content}</blockquote>

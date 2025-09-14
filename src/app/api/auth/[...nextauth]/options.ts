@@ -3,6 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/modals/user.model";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { comparePassword } from "@/helpers/bcrypt";
+import { headers } from "next/headers";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -14,47 +15,49 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials: any): Promise<any> {
-        try {
-          await dbConnect();
+        await dbConnect();
 
-          const user = await UserModel.findOne({
-            $or: [
-              { email: credentials.identifier },
-              { username: credentials.identifier },
-            ],
-          });
+        const user = await UserModel.findOne({
+          $or: [
+            { email: credentials.identifier },
+            { username: credentials.identifier },
+          ],
+        });
 
-          if (!user) {
-            throw new Error("User not found!");
-          }
+        if (!user) throw new Error("User not found!");
+        if (!user.isVerified) throw new Error("Verify your account before login!");
 
-          if (!user.isVerified) {
-            throw new Error("Verify your account before login!");
-          }
+        const isMatch = await comparePassword(
+          credentials.password,
+          user.password
+        );
 
-          const isMatch = await comparePassword(
-            credentials.password,
-            user.password
-          );
+        if (!isMatch) throw new Error("Invalid credentials!");
 
-          if (!isMatch) {
-            throw new Error("Invalid credentials!");
-          }
-
-          return user;
-        } catch (error: any) {
-          throw error;
-        }
+        return user;
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
+      const headersList = await headers(); // ✅ don't use await
+      const ip =
+        headersList.get("x-forwarded-for") ||
+        headersList.get("x-real-ip") || // fallback if deployed behind proxy
+        "unknown";
+
       if (user) {
         token._id = user._id?.toString();
         token.isVerified = user.isVerified;
         token.isAcceptingMessage = user.isAcceptingMessage;
         token.username = user.username;
+        token.ip = ip;
+      } 
+        // On subsequent requests → compare IP
+        if (token.ip && token.ip !== ip) {
+         
+          throw new Error("You are logged in from other device");
+        
       }
 
       return token;
@@ -65,8 +68,8 @@ export const authOptions: NextAuthOptions = {
         session.user.isVerified = token.isVerified;
         session.user.isAcceptingMessage = token.isAcceptingMessage;
         session.user.username = token.username;
+        session.user.ip = token.ip;
       }
-
       return session;
     },
   },
