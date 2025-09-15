@@ -3,7 +3,7 @@ import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/modals/user.model";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { comparePassword } from "@/helpers/bcrypt";
-import { headers } from "next/headers";
+import { redisClient } from "@/lib/redis";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -14,7 +14,7 @@ export const authOptions: NextAuthOptions = {
         identifier: { label: "Email or Username", type: "text" },
         password: { label: "Password", type: "password" },
       },
-      async authorize(credentials: Record<string, string> | undefined) {
+      async authorize(credentials: any ):Promise<any> {
         await dbConnect();
 
         const user = await UserModel.findOne({
@@ -25,7 +25,8 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) throw new Error("User not found!");
-        if (!user.isVerified) throw new Error("Verify your account before login!");
+        if (!user.isVerified)
+          throw new Error("Verify your account before login!");
 
         const isMatch = await comparePassword(
           credentials?.password ?? "",
@@ -33,39 +34,56 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isMatch) throw new Error("Invalid credentials!");
+        const existingSession = await redisClient.get(`session:${user._id}`);
+        if (existingSession) {
+          throw new Error("You are already logged in on another device.");
+        }
+
+        const sessionToken = crypto.randomUUID();
+
+        await redisClient.setex(
+          `session:${user._id}`,
+          60 * 60 * 24 * 7, // TTL in seconds (7 days)
+          sessionToken // the value
+        );
 
         return {
-          id: (user._id as string),
+          _id: user._id as string,
           email: user.email,
+          name: user.name,
           username: user.username,
           isVerified: user.isVerified,
           isAcceptingMessage: user.isAcceptingMessage,
+          sessionToken
         };
       },
     }),
   ],
   callbacks: {
     async jwt({ token, user }) {
-      const headersList = await headers(); // ✅ don't use await
-      const ip =
-        headersList.get("x-forwarded-for") ||
-        headersList.get("x-real-ip") || // fallback if deployed behind proxy
-        "unknown";
-
+       if (user) {
+        token.sessionToken = user.sessionToken;
+      }
+      
       if (user) {
         token._id = user._id?.toString();
         token.isVerified = user.isVerified;
         token.isAcceptingMessage = user.isAcceptingMessage;
         token.username = user.username;
-        token.ip = ip;
-      } 
-        // On subsequent requests → compare IP
-        if (token.ip && token.ip !== ip) {
-         
-          throw new Error("You are logged in from other device");
-        
+        token.name = user.name;
+       
       }
 
+      if (token?._id && token?.sessionToken) {
+        const activeSession = await redisClient.get(`session:${token._id}`);
+
+        if (!activeSession) throw new Error("Session expired. Please login again.");
+
+        if (activeSession !== token.sessionToken) {
+          throw new Error("You have been logged out due to login from another device.");
+        }
+      }
+     
       return token;
     },
     async session({ session, token }) {
@@ -74,7 +92,8 @@ export const authOptions: NextAuthOptions = {
         session.user.isVerified = token.isVerified;
         session.user.isAcceptingMessage = token.isAcceptingMessage;
         session.user.username = token.username;
-        session.user.ip = token.ip;
+        session.user.sessionToken = token.sessionToken;
+        session.user.name = token.name;
       }
       return session;
     },
@@ -88,5 +107,14 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  events: {
+  async signOut({ token }) {
+    if (token?._id) {
+      await redisClient.del(`session:${token._id}`);
+     
+    }
+  },
+},
+
   secret: process.env.NEXT_AUTH_SCRETE as string,
 };

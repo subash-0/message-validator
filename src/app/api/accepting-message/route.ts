@@ -95,7 +95,8 @@ export async function GET(req: Request) {
   const userId = user._id;
 
   const toObjectId = (id?: string) =>
-  id && mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null;
+      id && mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null;
+
 
   const validId = toObjectId(userId);
 
