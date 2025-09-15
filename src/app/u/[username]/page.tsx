@@ -80,7 +80,11 @@ export default function SendMessagePage() {
 
   useEffect(()=>{
     const getIsAcceptingMessage = async ()=>{
-      const { data } = await axios.get<ApiResponse>("/api/accepting-message");
+      const { data } = await axios.get<ApiResponse>(`/api/accepting-message`,{
+        params:{
+          username
+        }
+      });
       if(data?.isAcceptingMessage){
         setIsAcceptingMessage(data.isAcceptingMessage)
       }

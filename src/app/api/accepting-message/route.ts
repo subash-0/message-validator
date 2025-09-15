@@ -1,8 +1,7 @@
 
 import { authOptions } from "../auth/[...nextauth]/options";
 import dbConnect from "@/lib/dbConnect";
-import UserModel, { User } from "@/modals/user.model";
-import mongoose, { FilterQuery } from "mongoose";
+import UserModel from "@/modals/user.model";
 import {getServerSession} from "next-auth";
 
 
@@ -75,67 +74,58 @@ if(!updatedUser){
 
 }
 
-
 export async function GET(req: Request) {
   await dbConnect();
 
-  const session = await getServerSession(authOptions);
-  const user = session?.user;
-
-  if (!session || !user) {
-    return Response.json(
-      { success: false, message: "You are not authorized !" },
-      { status: 401 }
-    );
-  }
-
   const { searchParams } = new URL(req.url);
-  const username = searchParams.get("username"); 
+  const username = searchParams.get("username");
 
-  const userId = user._id;
-
-  const toObjectId = (id?: string) =>
-      id && mongoose.Types.ObjectId.isValid(id) ? new mongoose.Types.ObjectId(id) : null;
-
-
-  const validId = toObjectId(userId);
-
-  // Each condition is a filter for User
-  const conditions: FilterQuery<User>[] = [];
-
-  if (validId) {
-    conditions.push({ _id: validId });
-  }
-  if (username) {
-    conditions.push({ username });
-  }
-
-  if (conditions.length === 0) {
-    throw new Error("No identifier provided");
-  }
   try {
+    if (username) {
+      // 🔹 Public route: allow anyone to query by username
+      const user = await UserModel.findOne({ username });
 
+      if (!user) {
+        return Response.json(
+          { success: false, message: "User not found !" },
+          { status: 404 }
+        );
+      }
 
-const updatedUser = await UserModel.findOne({
-  $or: conditions,
-});
-    if (!updatedUser) {
       return Response.json(
-        { success: false, message: "User not found !" },
-        { status: 404 }
+        { success: true, isAcceptingMessage: user.isAcceptingMessage },
+        { status: 200 }
+      );
+    } else {
+      // 🔹 Private route: require session if no username
+      const session = await getServerSession(authOptions);
+      const user = session?.user;
+
+      if (!session || !user) {
+        return Response.json(
+          { success: false, message: "You are not authorized !" },
+          { status: 401 }
+        );
+      }
+
+      const dbUser = await UserModel.findById(user._id);
+
+      if (!dbUser) {
+        return Response.json(
+          { success: false, message: "User not found !" },
+          { status: 404 }
+        );
+      }
+
+      return Response.json(
+        { success: true, isAcceptingMessage: dbUser.isAcceptingMessage },
+        { status: 200 }
       );
     }
-
-   
-    return Response.json(
-      { success: true, isAcceptingMessage: updatedUser.isAcceptingMessage },
-      { status: 200 }
-    );
   } catch (error) {
-    console.error("Error while toggle Message", error);
-
+    console.error("Error while fetching message status:", error);
     return Response.json(
-      { success: false, message: "Error while Message status" },
+      { success: false, message: "Server error" },
       { status: 500 }
     );
   }
